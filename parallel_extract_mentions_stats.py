@@ -10,24 +10,22 @@ import read_data as data
 from functools import partial
 from multiprocessing import Manager, Pool
 
-#os.system("taskset -p 0xff %d" % os.getpid())
+# os.system("taskset -p 0xff %d" % os.getpid())
 
-#def get_article_entities(entities, article):
-#    return entities[entities['article'] == article.page_id]
 
 def data_initialize():
-     global entities
-     entities = util.get_entities(chunks=True)
-     entities.set_index(['article', 'entity'], inplace=True)
-     print('Entities loaded!')
+
+    global entities
+    entities = util.get_entities(chunks=True)
+    entities.set_index(['article', 'entity'], inplace=True)
+    print('Entities loaded!')
+
 
 def extract(article):
 
     if len(article.page_name) > 250:
         return
 
-    # print article name
-    #print(os.getpid())
     print(article.page_name.encode('utf8'), '\n')
 
     # get the linked entities within the article
@@ -58,10 +56,9 @@ def extract(article):
                 entity = entity[1:-1]
                 if nlp.invalid_entity(entity):
                     continue
-                if mention.strip() == '': continue
-
-                if len(mention) > 250 or len(entity) > 250:
+                if mention.strip() == '' or len(mention) > 249:
                     continue
+
                 G.loc[len(G.index)] = [article.page_name, entity, mention]
 
                 # we should strip mentions from ''
@@ -69,10 +66,10 @@ def extract(article):
         except:
             pass
 
-    G.to_hdf(settings.PATH_DATAOBJECTS + str(os.getpid()) +'.hdf5',
-                        format='table', append=True, data_columns=True,
-                        key='articles_entities_mentions_graph', encoding='utf-8',
-                        min_itemsize={'article':250, 'entity':250, 'mention':250})
+    G.to_hdf(settings.PATH_DATAOBJECTS + str(os.getpid()) + '.hdf5',
+             format='table', append=True, data_columns=True,
+             key='articles_entities_mentions_graph', encoding='utf-8',
+             min_itemsize={'article': 300, 'entity': 300, 'mention': 300})
 
 if __name__ == '__main__':
 
@@ -85,7 +82,7 @@ if __name__ == '__main__':
     #partial_extract = partial(extract, ns.entities)
     #partial_extract = partial(extract, get_article_entities(entities, None))
 
-    p = Pool(processes=3, initializer=data_initialize, initargs=(), maxtasksperchild=200)
+    p = Pool(processes=14, initializer=data_initialize, initargs=(), maxtasksperchild=200)
 
     with open(settings.PATH_ARTICLES, 'rb') as a:
 
