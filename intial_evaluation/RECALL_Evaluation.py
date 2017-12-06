@@ -12,7 +12,7 @@ articles_count = 0
 paragraphs_count = 0
 
 # get all entities from Wikipedia into a DataFrame
-entities = util.get_entities()
+entities = util.get_entities(True)
 
 # get all paragraphs of Wikipedia into a DataFrame
 paragraphs = util.get_paragraphs()
@@ -35,18 +35,11 @@ with open(settings.PATH_ARTICLES, 'rb') as a:
         articles_count+=1
 
         # get entities within the article
-        article_entities = entities['entity'][entities['article'] == article.page_id]
-        
+        article_entities = entities.loc[entities['article'] == article.page_id, 'entity']
+
         # get paragraphs within the article
-        article_paragraphs = paragraphs['paragraph'][paragraphs['article'] == article.page_id]
-        
-        # print page name
-        #print(page.page_name, '\n')
-        # print page main sections
-        #print([(section.heading, len(children)) for (section, children) in page.deep_headings_list()], '\n')
-        # print page all sections
-        #print(['/'.join([section.heading for section in sectionpath]) for sectionpath in page.flat_headings_list()], '\n')
-       
+        article_paragraphs = paragraphs[paragraphs['article'] == article.page_id, 'paragraph']
+
         # get article textual content
         article_content = article.to_string()
 
@@ -69,14 +62,14 @@ with open(settings.PATH_ARTICLES, 'rb') as a:
                 # find the article entities within paragraph
                 found_entities_count = 0
                 for ae in article_entities:
-                    if(ae in ' '.join(paragraph_text)): found_entities_count+=1
+                    if(ae in ' '.join(paragraph_text)):
+                        found_entities_count += 1
 
                 paragraph_entities_count = len(paragraph_entities)
 
                 # store entities counts
                 new_row = {'Article': article.page_name,'Paragraph': paragraph.para_id,'Paragraph Linked Entities': paragraph_entities_count,'Found Entities': found_entities_count}
                 Articles_Paragraphs_Entities = Articles_Paragraphs_Entities.append(pd.DataFrame(data=new_row, index=[0]), ignore_index=True)
-
 
         # calculate Recall values for articles
         # AFTER ignoring paragraphs which include no linked entities
@@ -101,11 +94,11 @@ with open(settings.PATH_ARTICLES, 'rb') as a:
 
         if((s < len(articles_counts)) and (articles_count == articles_counts[s])):
                     s+=1
-                    # calculate Recall values mean        
+                    # calculate Recall values mean
                     Macro_Recall_Values_std_error = Articles_Recall_Values['Macro Recall'].std() / np.sqrt(articles_count)
                     Micro_Recall_Values_std_error = Articles_Recall_Values['Micro Recall'].std() / np.sqrt(articles_count)
-        
-                    Macro_Recall_st_errors.append({'Number of articles':articles_count ,'Recall std error':Macro_Recall_Values_std_error})        
+
+                    Macro_Recall_st_errors.append({'Number of articles':articles_count ,'Recall std error':Macro_Recall_Values_std_error})
                     Micro_Recall_st_errors.append({'Number of articles':articles_count ,'Recall std error':Micro_Recall_Values_std_error})
 
         # stop after certain number of articles

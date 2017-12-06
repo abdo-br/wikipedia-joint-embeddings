@@ -39,7 +39,7 @@ def disambiguate(text, mention):
 
 def search(article, text):
 
-    annotations = pd.DataFrame(columns=['Level', 'Mention', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
+    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
 
     # maybe text is unclean !!!!!!!!!!!!!
     article_body = text
@@ -65,14 +65,14 @@ def search(article, text):
     regex_input = article_body
     for mention in mentions:
         for match in re.finditer(re.escape(mention), regex_input):
-            annotations.loc[len(annotations.index)] = [Level(2).name, match.group(), disambiguate(None, match.group()), match.start(), -1, None]
+            annotations.loc[len(annotations.index)] = [article.page_name, Level(2).name, match.group(), disambiguate(None, match.group()), match.start(), -1, None]
             article_body = nlp.replace_part_of_text(article_body, '☵' * len(match.group()), match.start(), len(match.group()))
 
     return article_body, annotations, list(mentions)
 
 def annotate(article, linked_entities_only=False):
 
-    annotations = pd.DataFrame(columns=['Level', 'Mention', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
+    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
 
     # clean on the content
     article_body = nlp.get_clean_article(article.to_string())
@@ -90,7 +90,7 @@ def annotate(article, linked_entities_only=False):
             mention, entity = pair.group()[1:].split(']')
             entity = entity[1:-1]
             if nlp.invalid_entity(entity): continue
-            annotations.loc[len(annotations.index)] = [Level(1).name, mention, nlp.get_entity_id(entity), pair.start() , -1, None]
+            annotations.loc[len(annotations.index)] = [article.page_name, Level(1).name, mention, nlp.get_entity_id(entity), pair.start() , -1, None]
             article_body = article_body.replace(pair.group(), '☰' * len(mention))
 
     # fix the other mentions offsets
@@ -104,7 +104,7 @@ def annotate(article, linked_entities_only=False):
                 annotations.loc[index, 'Offset'] -= len(row['EntityID']) + 4
 
     # search for more entities
-    if not linked_entities_only:  
+    if not linked_entities_only:
         article_body, search_annotations = search(article, article_body)
         annotations = annotations.append(search_annotations)
 
