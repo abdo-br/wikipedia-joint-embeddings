@@ -20,7 +20,7 @@ def sorted_dataframe(dataframe, key, ASC=True):
 def get_article(title):
 
     pages = data.AnnotationsFile(settings.PATH_ARTICLES)
-    page = pages.get(str.encode(urllib.parse.quote(title, encoding='utf-8')))
+    page = pages.get(str.encode(title.replace(' ', '%20'), encoding='utf-8'))
     return page
 
 

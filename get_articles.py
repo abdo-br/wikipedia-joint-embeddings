@@ -7,7 +7,6 @@ import util
 import settings
 import pickle
 
-
 titles = [
         'Ludwig van Beethoven',
         'Angela Merkel',
