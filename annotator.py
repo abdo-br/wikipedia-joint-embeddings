@@ -97,7 +97,7 @@ def annotate(article):
 
     # fix the other mentions offsets
     # work on copy of annotations
-    rows = annotations[['Entity', 'EntityID', 'Offset']].copy(deep=True)
+    rows = annotations[['Entity', 'Offset']].copy(deep=True)
     annotations['Ori_Offset'] = annotations['Offset']
 
     for index, annotation in annotations.iterrows():
