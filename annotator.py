@@ -31,24 +31,25 @@ graph = graph.rename(columns={'Article':'article', 'Mention':'mention', 'Entity'
 entities.set_index(['article', 'entity'], inplace=True)
 graph.set_index(['article', 'entity'], inplace=True)
 
+
 def disambiguate(text, mention):
     # naive approach
     most_frequent_entity = stats.at[stats.loc[stats.mention == mention, 'freq'].idxmax(axis=0), 'entity']
 
-    return nlp.get_entity_id(most_frequent_entity)
+    return most_frequent_entity
 
-def search(article, text):
+def search(article_name, text): # expect clean text
 
-    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
+    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention', 'Entity', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
 
-    # maybe text is unclean !!!!!!!!!!!!!
+    # cleaned article
     article_body = text
 
     # search for mentions of the article
     # and for mentions of the article entities
 
     # mentions of article
-    article_mentions = graph.loc[(article.page_name,)]
+    article_mentions = graph.loc[(article_name,)]
     # get entities of article
     article_entities = article_mentions.index.tolist()
 
@@ -65,14 +66,15 @@ def search(article, text):
     regex_input = article_body
     for mention in mentions:
         for match in re.finditer(re.escape(mention), regex_input):
-            annotations.loc[len(annotations.index)] = [article.page_name, Level(2).name, match.group(), disambiguate(None, match.group()), match.start(), -1, None]
+            entity = disambiguate(None, match.group())
+            annotations.loc[len(annotations.index)] = [article_name, Level(2).name, match.group(), entity, nlp.get_entity_id(entity), match.start(), -1, None]
             article_body = nlp.replace_part_of_text(article_body, '☵' * len(match.group()), match.start(), len(match.group()))
 
-    return article_body, annotations, list(mentions)
+    return annotations, article_body
 
-def annotate(article, linked_entities_only=False):
+def annotate(article):
 
-    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
+    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention', 'Entity', 'EntityID', 'Offset', 'Sentence', 'The_Sentence'], dtype='unicode', index=None)
 
     # clean on the content
     article_body = nlp.get_clean_article(article.to_string())
@@ -90,23 +92,22 @@ def annotate(article, linked_entities_only=False):
             mention, entity = pair.group()[1:].split(']')
             entity = entity[1:-1]
             if nlp.invalid_entity(entity): continue
-            annotations.loc[len(annotations.index)] = [article.page_name, Level(1).name, mention, nlp.get_entity_id(entity), pair.start() , -1, None]
+            annotations.loc[len(annotations.index)] = [article.page_name, Level(1).name, mention, entity, nlp.get_entity_id(entity), pair.start() , -1, None]
             article_body = article_body.replace(pair.group(), '☰' * len(mention))
 
     # fix the other mentions offsets
     # work on copy of annotations
-    rows = annotations[['Level', 'EntityID', 'Offset']].copy(deep=True)
+    rows = annotations[['Entity', 'EntityID', 'Offset']].copy(deep=True)
     annotations['Ori_Offset'] = annotations['Offset']
 
     for index, annotation in annotations.iterrows():
         for i, row in rows.iterrows():
             if row['Offset'] < annotation['Ori_Offset']:
-                annotations.loc[index, 'Offset'] -= len(row['EntityID']) + 4
+                annotations.loc[index, 'Offset'] -= len(row['Entity']) + 4
 
     # search for more entities
-    if not linked_entities_only:
-        article_body, search_annotations = search(article, article_body)
-        annotations = annotations.append(search_annotations)
+    search_annotations, article_body = search(article.page_name, article_body)
+    annotations = annotations.append(search_annotations)
 
     # reconstruct the article
     for row in annotations.itertuples():
@@ -133,5 +134,5 @@ with open(settings.PATH_ARTICLES, 'rb') as a:
         i += 1
         if i == 578:
             print(article.page_name)
-            G = search(article, article.to_string())
+            G = annotate(article)
             break
