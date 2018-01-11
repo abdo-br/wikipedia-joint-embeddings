@@ -79,7 +79,7 @@ class Page(object):
 
         :rtype: str
         """
-        return self.page_name + '\n' + ''.join(str(s) for s in self.skeleton)
+        return ''.join(str(s) for s in self.skeleton)
 
     def get_type(self):
         return str(self.page_meta)

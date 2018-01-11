@@ -23,5 +23,8 @@ PATH_DATAOBJECTS = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/dataObjec
 FILE_GOLD_STANDARD = 'annotations.csv'
 PATH_GOLD_STANDARD = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/gold_standard/'
 
+FILE_GOLD_STANDARD_ARTICLES = 'gs_articles.pickle'
+FILE_TOKENIZER = 'gs_tokenizer.pickle'
+
 # dbpedia spotlight
 PATH_DBPEDIA_SPOTLIGHT_OUTPUT = 'F:/Business Informatics/Thesis/Python/DBpedia Spotlight/output/'
