@@ -44,4 +44,4 @@ articles = []
 for title in titles:
     articles.append(util.get_article(title))
 
-pickle.dump(articles, open(settings.PATH_DATAOBJECTS + 'gs_articles.p', 'wb'))
+pickle.dump(articles, open(settings.PATH_DATAOBJECTS + 'gs_articles.pickle', 'wb'))
