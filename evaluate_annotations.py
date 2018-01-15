@@ -8,11 +8,13 @@ Created on Sun Dec  3 15:58:43 2017
 import settings
 import pandas as pd
 
-annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention', 'EntityID',
+
+annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention',
+                                    'Used_Entity', 'Entity', 'EntityID',
                                     'Offset', 'Sentence', 'The_Sentence'],
                            dtype='unicode', index=None)
 
-# the expected golds standard has one entity per sentence by maximum
+# the expected golds standard has one entity per sentence at most
 gold_standard = pd.read_csv(settings.PATH_GOLD_STANDARD +
                             settings.FILE_GOLD_STANDARD, encoding='utf-8')
 
@@ -27,7 +29,7 @@ def evaluate(annotations):
                                     'macro_recall', 'macro_precision',
                                     'macro_f1'], index=None)
 
-    for index, entity in enumerate(gold_standard['EntityID'].unique()):
+    for entity in gold_standard['EntityID'].unique():
         gs = gold_standard.loc[gold_standard['EntityID'] == entity]
         actual = gs.shape[0]
         result = pd.merge(gs, annotations, how='inner',

@@ -17,7 +17,6 @@ def data_initialize():
 
     global entities
     entities = util.get_entities(chunks=True)
-    #entities.set_index(['article', 'entity'], inplace=True)
     print('Entities loaded!')
 
 
@@ -25,7 +24,7 @@ def extract(article):
 
     print(article.page_name.encode('utf8'), '\n')
 
-    # get the linked entities within the article
+    # linked entities within the article
     article_entities = entities.loc[entities.article == article.page_id, 'entity']
 
 #    try:
@@ -42,10 +41,7 @@ def extract(article):
     G = pd.DataFrame(columns=['article', 'entity', 'mention'], dtype='unicode')
 
     for entity in article_entities:
-
-        pattern = nlp.get_entity_pattern(entity)
-
-        for pair in re.finditer(pattern, article_body):
+        for pair in re.finditer(nlp.get_entity_pattern(entity), article_body):
             mention, entity = pair.group()[1:].split(']')
             entity = entity[1:-1]
             if nlp.invalid_entity(entity):
@@ -57,7 +53,7 @@ def extract(article):
 
     G.to_hdf(settings.PATH_DATAOBJECTS + str(os.getpid()) + '.hdf5', format='table',
              append=True, complib='blosc', complevel=3,
-             key='articles_entities_mentions_graph', encoding='utf-8',
+             key='', encoding='utf-8',
              min_itemsize={'article': 500, 'entity': 500, 'mention': 500})
 
 

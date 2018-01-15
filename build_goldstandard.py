@@ -38,7 +38,7 @@ def annotate(article):
             mention, entity = pair.group()[1:].split(']')
             entity = entity[1:-1]
             if nlp.invalid_entity(entity):
-                annotations.loc[len(annotations.index)] = [article.page_name, util.Level(3).name, mention, entity, entity, None, pair.start() , -1, None]
+                annotations.loc[len(annotations.index)] = [article.page_name, util.Level(3).name, mention, None, None, None, pair.start() , -1, None]
                 article_body = article_body.replace(pair.group(), '☲' * len(mention))
             else:
                 erd = nlp.resolve_redirect(entity)
@@ -50,7 +50,7 @@ def annotate(article):
                 article_body = article_body.replace(pair.group(), '☰' * len(mention))
 
 
-    # fix the other mentions offsets
+    # fix other mentions offsets
     # work on copy of annotations
     rows = annotations[['Used_Entity', 'Offset']].copy(deep=True)
     annotations['Ori_Offset'] = annotations['Offset']
