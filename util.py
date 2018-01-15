@@ -8,7 +8,7 @@ from enum import Enum
 
 class Level(Enum):
     Linked_Entity = 1
-    Mentions = 2 # mentions of article & mentions of article entities
+    Mentions = 2  # mentions of article & mentions of article entities
     Invalid = 3
 
 # return a valid file name dictionary

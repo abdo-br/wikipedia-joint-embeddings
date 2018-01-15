@@ -111,6 +111,10 @@ def get_sentences(text, tokenizer=None):
         return tokenizer.tokenize(text)
 
 
+def get_paragraphs(text):
+    return text.split('\n\n')
+
+
 # get sentences with their offsets
 def get_sentences_spans(text, sentences):
     offset = 0
