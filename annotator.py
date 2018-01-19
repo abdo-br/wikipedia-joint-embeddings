@@ -14,14 +14,14 @@ Final = ''
 # can be a method to load the knowledge base
 entities = util.get_entities(chunks=True)
 
-graph = pd.read_hdf(settings.PATH_DATAOBJECTS+'6456.hdf5', key='')
-stats = graph.groupby(by=['entity', 'mention'], sort=False).count()
-stats = stats.rename(columns={'article':'freq'})
+#graph = pd.read_hdf(settings.PATH_DATAOBJECTS+'6456.hdf5', key='')
+#stats = graph.groupby(by=['entity', 'mention'], sort=False).count()
+#stats = stats.rename(columns={'article':'freq'})
 
 
 #stats = pd.read_pickle(settings.PATH_DATAOBJECTS+'entities_mentions_graph.gzip', compression='gzip')
-stats.reset_index(level=0, inplace=True)
-stats.reset_index(inplace=True)
+#stats.reset_index(level=0, inplace=True)
+#stats.reset_index(inplace=True)
 
 # temporary fix  !!!!!!!!!!!!!!!!!!!
 #stats = stats.rename(columns={'Article':'freq', 'Mention':'mention', 'Entity':'entity'})
@@ -139,7 +139,7 @@ def search(article_name, text):  # expect clean text
     return annotations, article_body
 
 
-def annotate(article):
+def annotate(article, search=False):
 
     annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention',
                                         'Used_Entity', 'Entity', 'EntityID',
@@ -176,11 +176,10 @@ def annotate(article):
             annotations.loc[len(annotations.index)] = [article.page_name, util.Level(1).name, mention, entity, entity, entity_id, pair.start()]
             article_body = article_body.replace(pair.group(), entity_id)
 
-            # SAVE TO DICTIONARY !!!!!!!!!!!!!!!!!!!!
-
-    # search for more entities
-    search_annotations, article_body = search(article.page_name, article_body)
-    annotations = annotations.append(search_annotations)
+    if search:
+        # search for more entities
+        search_annotations, article_body = search(article.page_name, article_body)
+        annotations = annotations.append(search_annotations)
 
     global Final
     Final = article_body
@@ -194,5 +193,5 @@ with open(settings.PATH_ARTICLES, 'rb') as a:
         i += 1
         if i == 6:
             print(article.page_name)
-            G = annotate(article)
+            #G = annotate(article)
             break
