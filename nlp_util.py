@@ -13,7 +13,8 @@ ENTITY_PATTERN = r'\[[^\[\]]*?\](?=\([^\[]+?\))\(.*?((?=\()\(.+?\).*?|[^\(\)]+?)
 
 def get_entity_pattern(entity):
     # [mention](entity)
-    return r'\[[^\[\]]*?\](?=\(' + re.escape(entity) + r'\))\(' + re.escape(entity) + r'\)'
+    p = re.escape(entity)
+    return ''.join([r'\[[^\[\]]*?\](?=\(', p, r'\))\(', p, r'\)'])
 
 
 def resolve_redirect(entity):
@@ -64,12 +65,10 @@ def remove_punctuation(text):
     return text.translate(str.maketrans('', '', string.punctuation))
 
 
-# delete a slice from text
 def remove_part_from_text(text, start, length):
     return text[:start] + text[start+length:]
 
 
-# replace a slice of text
 def replace_part_of_text(text, new_part, start, length):
     return text[:start] + new_part + text[start+length:]
 
