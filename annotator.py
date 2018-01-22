@@ -14,7 +14,8 @@ Final = ''
 
 def initialize_knowledgebase():
     global entities, graph, stats
-    entities = util.get_entities(chunks=True)
+    entities = util.get_entities()
+    print('KB loaded!')
 
 #graph = pd.read_hdf(settings.PATH_DATAOBJECTS+'6456.hdf5', key='')
 #stats = graph.groupby(by=['entity', 'mention'], sort=False).count()
@@ -154,7 +155,8 @@ def annotate(article, search=False):
 
     # find linked entities
     # get linked entities within the article
-    article_entities = entities.loc[entities.article == article.page_id]
+    q = 'article == "{}"'.format(article.page_id)
+    article_entities = entities.query(q)
 
     article_entities['valid'] = None
     article_entities['valid'] = article_entities['entity'].map(lambda x: not nlp.invalid_entity(x))

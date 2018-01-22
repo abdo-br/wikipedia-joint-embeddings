@@ -13,7 +13,7 @@ import pandas as pd
 from multiprocessing import Pool
 
 
-if __name__ == '__main__':
+def main():
 
     s = 0
     p = 0
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     dictionary = pd.DataFrame(columns=['Entity', 'EntityID'], dtype='unicode', index=None)
 
-    jobs = Pool(processes=cores, initializer=annotator.initialize_knowledgebase, initargs=(), maxtasksperchild=500)
+    jobs = Pool(processes=cores, initializer=annotator.initialize_knowledgebase, initargs=(), maxtasksperchild=250)
 
     with open(settings.PATH_ARTICLES, 'rb') as a:
 
@@ -60,7 +60,13 @@ if __name__ == '__main__':
 
     jobs.close()
 
-    dictionary.to_pickle(settings.PATH_OUTPUT+'entities_dictionary.pickle', compression='gzip')
+    dictionary.to_csv(settings.PATH_OUTPUT+'entities_dictionary.csv', encoding='utf-8', index=False)
+
 
     print('\n')
     print('DONE')
+
+
+if __name__ == '__main__':
+
+    main()
