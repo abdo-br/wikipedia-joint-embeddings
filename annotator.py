@@ -11,13 +11,14 @@ Middle = ''
 Original = ''
 Final = ''
 
-# can be a method to load the knowledge base
-entities = util.get_entities(chunks=True)
+
+def initialize_knowledgebase():
+    global entities, graph, stats
+    entities = util.get_entities(chunks=True)
 
 #graph = pd.read_hdf(settings.PATH_DATAOBJECTS+'6456.hdf5', key='')
 #stats = graph.groupby(by=['entity', 'mention'], sort=False).count()
 #stats = stats.rename(columns={'article':'freq'})
-
 
 #stats = pd.read_pickle(settings.PATH_DATAOBJECTS+'entities_mentions_graph.gzip', compression='gzip')
 #stats.reset_index(level=0, inplace=True)
@@ -148,8 +149,8 @@ def annotate(article, search=False):
     # clean on the content
     article_body = nlp.get_clean_article(article.to_string())
 
-    global Original
-    Original = article_body
+    #global Original
+    #Original = article_body
 
     # find linked entities
     # get linked entities within the article
@@ -181,17 +182,7 @@ def annotate(article, search=False):
         search_annotations, article_body = search(article.page_name, article_body)
         annotations = annotations.append(search_annotations)
 
-    global Final
-    Final = article_body
+    #global Final
+    #Final = article_body
 
     return annotations, article_body
-
-# test
-i = 0
-with open(settings.PATH_ARTICLES, 'rb') as a:
-    for article in data.iter_annotations(a):
-        i += 1
-        if i == 6:
-            print(article.page_name)
-            #G = annotate(article)
-            break
