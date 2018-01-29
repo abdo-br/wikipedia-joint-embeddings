@@ -32,34 +32,6 @@ def resolve_redirect(entity):
         else:
             return '~ERROR'
 
-def invalid_entity(entity):
-
-    if entity.startswith(':'): return True
-    if entity.startswith('List of'): return True
-    if entity.startswith('Wikipedia:'): return True
-    if entity.startswith('Category:'): return True
-    if entity.startswith('Wikisource:'): return True
-    if entity.startswith('MediaWiki:'): return True
-    if entity.startswith('Wiktionary:'): return True
-    if entity.startswith('Wikt:'): return True
-    if entity.startswith('Wikiasite:'): return True
-    if entity.startswith('Help:'): return True
-    if entity.startswith(':wiktionary'): return True
-    if entity.startswith(':wikt'): return True
-    if entity.startswith('Commons:'): return True
-    if entity.startswith('File:'): return True
-    if entity.startswith('Image:'): return True
-    if entity.startswith('Template:'): return True
-    if entity.startswith('Portal:'): return True
-    if entity.startswith('Module:'): return True
-    if entity.startswith('Special:'): return True
-    if entity.startswith('User:'): return True
-    if entity.startswith('Project:'): return True
-    if entity.startswith('Book:'): return True
-    if entity.startswith('WP:'): return True
-
-    return False
-
 
 def remove_punctuation(text):
     return text.translate(str.maketrans('', '', string.punctuation))

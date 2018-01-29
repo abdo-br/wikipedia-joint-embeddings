@@ -3,7 +3,6 @@ import re
 import util
 import pickle
 import nlp_util as nlp
-import read_data as data
 import pandas as pd
 import settings
 
@@ -13,8 +12,10 @@ Final = ''
 
 
 def initialize_knowledgebase():
+    # entities is a dict !!!!!!!!!
     global entities, graph, stats
     entities = util.get_entities()
+    entities = util.split_dataframe(entities)
     print('KB loaded!')
 
 #graph = pd.read_hdf(settings.PATH_DATAOBJECTS+'6456.hdf5', key='')
@@ -156,24 +157,22 @@ def annotate(article, search=False):
     # find linked entities
     # get linked entities within the article
     q = 'article == "{}"'.format(article.page_id)
-    article_entities = entities.query(q)
-
-    article_entities['valid'] = None
-    article_entities['valid'] = article_entities['entity'].map(lambda x: not nlp.invalid_entity(x))
+    article_entities = entities[util.get_hash(article.page_id)].query(q)
 
     # process invalid entities
     regex_input = article_body
-    for entity in article_entities.loc[article_entities.valid == False, 'entity']:
+    for entity in article_entities.loc[article_entities.valid == 'False', 'entity']:
         for pair in re.finditer(nlp.get_entity_pattern(entity), regex_input):
             mention, target = pair.group()[1:].split(']')
             article_body = article_body.replace(pair.group(), mention)
 
     # valid entities
     regex_input = article_body
-    for entity in article_entities.loc[article_entities.valid == True, 'entity']:
+    for entity in article_entities.loc[article_entities.valid == 'True', 'entity']:
         for pair in re.finditer(nlp.get_entity_pattern(entity), regex_input):
-            mention, entity = pair.group()[1:].split(']')
-            entity = entity[1:-1]
+            values = pair.group()[1:].split(']')
+            mention = values[0]
+            entity = values[1][1:-1]
             #erd = nlp.resolve_redirect(entity)  !!!!!!!!!!!!!!!!!!!!!!!!!
             entity_id = nlp.get_entity_id(entity)
             annotations.loc[len(annotations.index)] = [article.page_name, util.Level(1).name, mention, entity, entity, entity_id, pair.start()]

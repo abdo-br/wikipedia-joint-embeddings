@@ -37,23 +37,30 @@ def main():
 
     with open(settings.PATH_ARTICLES, 'rb') as a:
 
-        for work in jobs.imap(annotator.annotate, data.iter_annotations(a), chunksize=20):
+        try:
 
-            s += 1
-            p += 1
+            for work in jobs.imap(annotator.annotate, data.iter_annotations(a), chunksize=10):
 
-            if s > size:
-                break
+                s += 1
+                p += 1
 
-            if p > part:
-                p = 0
-                i += 1
+                if s > size:
+                    break
 
-            annotations, article_body = work
-            dictionary = dictionary.append(annotations[['Entity', 'EntityID']])
-            with open(settings.PATH_OUTPUT+'part '+str(i)+'.txt', 'a', encoding='utf-8') as b:
-                b.write(article_body)
-                b.write('\n\n')
+                if p > part:
+                    p = 0
+                    i += 1
+
+                annotations, article_body = work
+                dictionary = dictionary.append(annotations[['Entity', 'EntityID']])
+                with open(settings.PATH_OUTPUT+'part '+str(i)+'.txt', 'a', encoding='utf-8') as b:
+                    b.write(article_body)
+                    b.write('\n\n')
+
+        except Exception as e:
+
+            with open('ERRORS.txt', 'a') as err:
+                err.write(a.page_id)
 
     print('\n')
     print('JOINING NOW')
@@ -61,7 +68,6 @@ def main():
     jobs.close()
 
     dictionary.to_csv(settings.PATH_OUTPUT+'entities_dictionary.csv', encoding='utf-8', index=False)
-
 
     print('\n')
     print('DONE')

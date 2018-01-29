@@ -421,13 +421,6 @@ class ParaBody(object):
     def get_text(self):
         raise NotImplementedError
 
-    def get_text(self):
-        """
-        Get all of the text within a :class:`ParaBody`.
-
-        :rtype: str
-        """
-        raise UnimplementedError
 
 class ParaText(ParaBody):
     """
@@ -488,6 +481,7 @@ class ParaLink(ParaBody):
 
     def __str__(self, level=None):
         return "[%s](%s)" % (self.anchor_text, self.page)
+
 
 def _iter_with_header(file, parse, expected_file_type):
     maybe_hdr = cbor.load(file)

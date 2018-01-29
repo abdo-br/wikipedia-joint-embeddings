@@ -5,7 +5,8 @@ import settings
 import read_data as data
 import numpy as np
 import pandas as pd
-#import multiprocessing
+import multiprocessing
+from functools import partial
 from threading import Thread
 from enum import Enum
 
@@ -15,14 +16,22 @@ class Level(Enum):
     Mentions = 2  # mentions of article & mentions of article entities
     Invalid = 3
 
+
 # return a valid file name dictionary
 def valid_filename():
     return str.maketrans('', '', r'<>:"/\|?*')
 
 
+# split dataframe into chunks saved in dict
+def split_dataframe(df, col='hash'):
+    d = dict(tuple(df.groupby(col)))
+    return d
+
+
 def sorted_dataframe(dataframe, key, ASC=True):
     # sort dataframe
     dataframe.index = key
+    # sort then reset index and drop the sort one
     dataframe = dataframe.sort_index(ascending=ASC).reset_index(drop=True)
     return dataframe
 
@@ -54,10 +63,21 @@ def get_article(title):
 #    return (t, df)
 
 
-def decode_entity(df):
+def get_hash(value, n_buckets=11):
+    h = str(ord(str(value)[0]) % n_buckets)
+    return h
+
+
+# decode percent-encoding
+def decode_percent(value):
     decode = lambda x: urllib.parse.unquote(str(x), encoding='utf-8', errors='replace')
-    df[2] = df[2].apply(decode)
-    return df
+    return decode(value)
+
+
+#def modify(df):
+#    df['hash'] = df['article'].apply(get_hash)
+#    df['valid'] = df['entity'].apply(lambda x: not invalid_entity(x))
+#    return df
 
 
 def get_entities():  # we need to clean redirects
@@ -80,7 +100,7 @@ def get_entities():  # we need to clean redirects
 
 # using pool
 #    pool = multiprocessing.Pool(multiprocessing.cpu_count() - 3)
-#    entities = pd.concat(pool.map(decode_entity, chunks))
+#    entities = pd.concat(pool.map(modify, chunks))
 #    pool.close()
 #    pool.join()
 
@@ -101,3 +121,33 @@ def get_paragraphs():
     paragraphs.rename(columns={0: 'article', 2: 'paragraph'}, inplace=True)
 
     return paragraphs
+
+
+def invalid_entity(entity):
+
+    entity = str(entity)
+    if entity.startswith(':'): return True
+    if entity.startswith('List of'): return True
+    if entity.startswith('Wikipedia:'): return True
+    if entity.startswith('Category:'): return True
+    if entity.startswith('Wikisource:'): return True
+    if entity.startswith('MediaWiki:'): return True
+    if entity.startswith('Wiktionary:'): return True
+    if entity.startswith('Wikt:'): return True
+    if entity.startswith('Wikiasite:'): return True
+    if entity.startswith('Help:'): return True
+    if entity.startswith(':wiktionary'): return True
+    if entity.startswith(':wikt'): return True
+    if entity.startswith('Commons:'): return True
+    if entity.startswith('File:'): return True
+    if entity.startswith('Image:'): return True
+    if entity.startswith('Template:'): return True
+    if entity.startswith('Portal:'): return True
+    if entity.startswith('Module:'): return True
+    if entity.startswith('Special:'): return True
+    if entity.startswith('User:'): return True
+    if entity.startswith('Project:'): return True
+    if entity.startswith('Book:'): return True
+    if entity.startswith('WP:'): return True
+
+    return False
