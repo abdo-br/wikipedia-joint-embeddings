@@ -1,6 +1,7 @@
 
 #import numba
 import urllib
+import pickle
 import settings
 import read_data as data
 import numpy as np
@@ -79,6 +80,19 @@ def decode_percent(value):
 #    df['valid'] = df['entity'].apply(lambda x: not invalid_entity(x))
 #    return df
 
+def get_most_freq_entities():
+    chunks = pd.read_table(settings.PATH_BEST_ENTITIES, sep=',',
+                           header=0, index_col=False, dtype='unicode',
+                           chunksize=500000, low_memory=False, engine='c')
+
+    best_entities = pd.concat([chunk for chunk in chunks], ignore_index=True)
+
+    return best_entities
+
+
+def get_mentions():
+    return pickle.load(open(settings.PATH_MENTIONS, 'rb'))
+
 
 def get_entities():  # we need to clean redirects
     """
@@ -125,7 +139,7 @@ def get_paragraphs():
 
 def invalid_entity(entity):
 
-    entity = str(entity)
+    entity = str(entity).strip()
     if entity.startswith(':'): return True
     if entity.startswith('List of'): return True
     if entity.startswith('Wikipedia:'): return True

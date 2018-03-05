@@ -1,40 +1,32 @@
 
 import re
 import util
-import pickle
 import nlp_util as nlp
 import pandas as pd
-import settings
 
 Middle = ''
 Original = ''
 Final = ''
 
+error_articles = []
 
 def initialize_knowledgebase():
-    # entities is a dict !!!!!!!!!
-    global entities, graph, stats
+    # entities is a dict
+    global entities, all_mentions, most_freq
     entities = util.get_entities()
-    entities = util.split_dataframe(entities)
-    print('KB loaded!')
-
-#graph = pd.read_hdf(settings.PATH_DATAOBJECTS+'6456.hdf5', key='')
-#stats = graph.groupby(by=['entity', 'mention'], sort=False).count()
-#stats = stats.rename(columns={'article':'freq'})
-
-#stats = pd.read_pickle(settings.PATH_DATAOBJECTS+'entities_mentions_graph.gzip', compression='gzip')
-#stats.reset_index(level=0, inplace=True)
-#stats.reset_index(inplace=True)
-
-# temporary fix  !!!!!!!!!!!!!!!!!!!
-#stats = stats.rename(columns={'Article':'freq', 'Mention':'mention', 'Entity':'entity'})
-#graph = graph.rename(columns={'Article':'article', 'Mention':'mention', 'Entity':'entity'})
+    print('Entities Loading!')
+    entities = util.split_dataframe(entities, col='article')
+    print('Entities Dictionary Built!')
+    all_mentions = util.get_mentions()
+    print('Mentions Dictionary Loaded!')
+    most_freq = util.get_most_freq_entities()
+    most_freq.set_index('mention', inplace=True)
+    print('Most Frequent Entities Loaded!')
 
 
 # for evaluation
 def get_annotations(gold_standard):
 
-    tokenizer = pickle.load(open(settings.PATH_DATAOBJECTS + settings.FILE_TOKENIZER, 'rb'))
     annotations = pd.DataFrame(columns=['Article', 'Mention', 'Entity',
                                         'EntityID', 'Offset', 'Sentence',
                                         'The_Sentence'], dtype='unicode', index=None)
@@ -44,21 +36,16 @@ def get_annotations(gold_standard):
         # search for mentions of the article
         # and for mentions of the article entities
 
-        # article rows
-        rows = graph.loc[graph.article == article.title]
-        # mentions of article
-        #article_mentions = rows['mention']
-        # entities of article
-        #article_entities = rows['entity']
+        article_entities = entities[article.page_id]
 
-        mentions = stats.loc[stats.entity.isin(rows['entity']), 'mention']
+        mentions = []
+        for entity in article_entities['entity']:
+            try:
+                mentions.extend(all_mentions[entity])
+            except:
+                continue
 
-        mentions = mentions.append(rows['mention'])
-        mentions.drop_duplicates(inplace=True)
-        mentions = util.sorted_dataframe(mentions, mentions.str.len(), False)
-
-        # TODO
-        # stem the mentions
+        mentions = sorted(mentions, key=len)[::-1]
 
         for mention in mentions:
             for match in re.finditer(re.escape(mention), article.text):
@@ -67,7 +54,7 @@ def get_annotations(gold_standard):
 
         # map offsets to sentences
         sentences_spans = []
-        tokenized_sents = nlp.get_sentences(article.text, tokenizer)
+        tokenized_sents = nlp.get_sentences(article.text)
         for sentence in nlp.get_sentences_spans(article.text, tokenized_sents):
             sentences_spans.append(sentence)
 
@@ -79,10 +66,13 @@ def get_annotations(gold_standard):
 
 def disambiguate(text, mention):
     # naive approach
-    # most_frequent_entity
-    entity = stats.at[stats.loc[stats.mention == mention, 'freq'].idxmax(axis=0), 'entity']
+    # most frequent entity given mention
+    try:
+        entity = most_freq.loc[(mention,)].values[0]
+        return entity
+    except:
+        return mention
 
-    return entity
 
 def search(article_name, text):  # expect clean text
 
@@ -90,27 +80,26 @@ def search(article_name, text):  # expect clean text
                                         'Used_Entity', 'Entity', 'EntityID',
                                         'Offset'], dtype='unicode', index=None)
 
-    # cleaned article
+    # clean article
     article_body = text
 
-    global Middle
-    Middle = article_body
+    #global Middle
+    #Middle = article_body
 
     # search for mentions of the article
-    # and for mentions of the article entities
+    # and mentions of the article entities
 
-    # article rows
-    rows = graph.loc[graph.article == article.page_name]
-    # mentions of article
-    #article_mentions = rows['mention']
-    # entities of article
-    #article_entities = rows['entity']
+    mentions = []
+    for entity in annotations['Entity']:
+        try:
+            mentions.extend(all_mentions[entity])
+        except:
+            continue
 
-    mentions = stats.loc[stats.entity.isin(rows['entity']), 'mention']
+    #mentions.extend(annotations['Mention'].values)
 
-    mentions = mentions.append(rows['mention'])
-    mentions.drop_duplicates(inplace=True)
-    mentions = util.sorted_dataframe(mentions, mentions.str.len(), False)
+    #mentions = list(set(mentions))
+    mentions = sorted(mentions, key=len)[::-1]
 
     # TODO
     # stem the mentions
@@ -142,43 +131,59 @@ def search(article_name, text):  # expect clean text
     return annotations, article_body
 
 
-def annotate(article, search=False):
+def annotate(article, and_search=True):
 
     annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention',
                                         'Used_Entity', 'Entity', 'EntityID',
                                         'Offset'], dtype='unicode', index=None)
 
-    # clean on the content
-    article_body = nlp.get_clean_article(article.to_string())
-
     #global Original
-    #Original = article_body
+    #Original = article.to_string()
 
     # find linked entities
     # get linked entities within the article
-    q = 'article == "{}"'.format(article.page_id)
-    article_entities = entities[util.get_hash(article.page_id)].query(q)
+    try:
+
+        article_entities = entities[article.page_id]
+
+        article_body = article.to_string()
+
+    except:
+
+        #error_articles.append(article)
+        return None, None
 
     # process invalid entities
     regex_input = article_body
-    for entity in article_entities.loc[article_entities.valid == 'False', 'entity']:
+    for entity in article_entities.loc[article_entities.valid == 'False', 'used_entity']:
         for pair in re.finditer(nlp.get_entity_pattern(entity), regex_input):
-            mention, target = pair.group()[1:].split(']')
-            article_body = article_body.replace(pair.group(), mention)
+
+            try:
+                mention, target = pair.group()[1:].split(']')
+                article_body = article_body.replace(pair.group(), mention)
+
+            except Exception as e:
+                pass
 
     # valid entities
     regex_input = article_body
-    for entity in article_entities.loc[article_entities.valid == 'True', 'entity']:
+    for entity in article_entities.loc[article_entities.valid == 'True', 'used_entity']:
         for pair in re.finditer(nlp.get_entity_pattern(entity), regex_input):
-            values = pair.group()[1:].split(']')
-            mention = values[0]
-            entity = values[1][1:-1]
-            #erd = nlp.resolve_redirect(entity)  !!!!!!!!!!!!!!!!!!!!!!!!!
-            entity_id = nlp.get_entity_id(entity)
-            annotations.loc[len(annotations.index)] = [article.page_name, util.Level(1).name, mention, entity, entity, entity_id, pair.start()]
-            article_body = article_body.replace(pair.group(), entity_id)
 
-    if search:
+            try:
+                values = pair.group()[1:].split(']')
+                mention = values[0]
+                entity = values[1][1:-1]
+                # resolve redirect
+                resolved = article_entities.loc[article_entities.used_entity == entity, 'entity'].values[0]
+                entity_id = nlp.get_entity_id(resolved)
+                annotations.loc[len(annotations.index)] = [article.page_name, util.Level(1).name, mention, entity, resolved, entity_id, pair.start()]
+                article_body = article_body.replace(pair.group(), entity_id)
+
+            except Exception as e:
+                pass
+
+    if and_search:
         # search for more entities
         search_annotations, article_body = search(article.page_name, article_body)
         annotations = annotations.append(search_annotations)
@@ -186,4 +191,7 @@ def annotate(article, search=False):
     #global Final
     #Final = article_body
 
-    return annotations, article_body
+    article_body = nlp.clean_article(article_body)
+
+    # to build the IDs dict
+    return annotations[['Entity', 'EntityID']], article_body

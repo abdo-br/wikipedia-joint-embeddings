@@ -1,30 +1,38 @@
 
-# number of articles to process (-1 = ALL)
-NUM_ARTICLES = -1
+# number of articles to process (-1 = ALL)  57129
+NUM_ARTICLES = 5000
 
+# KEY = thesis
+
+# small data
+#PATH_DATA = 'F:/Business Informatics/Thesis/Data/Y1/'
+#PATH_ARTICLES = PATH_DATA + 'train.benchmarkY1train.fold1.cbor'
+#PATH_PARAGRAPHS = PATH_DATA + 'train.benchmarkY1train.fold1.cbor.paragraphs'
+#PATH_PARAGRAPHS_ARTICLES = PATH_DATA + 'train.benchmarkY1train.fold1.cbor.article.qrels'
+#PATH_ENTITIES_ARTICLES = PATH_DATA + 'train.benchmarkY1train.fold1.cbor.article.entity.qrels'
 
 # dataset train folds
 PATH_DATA = 'F:/Business Informatics/Thesis/Data/train/'
-PATH_ARTICLES = PATH_DATA + 'train.fold1.cbor'
-PATH_PARAGRAPHS = PATH_DATA + 'train.fold1.cbor.paragraphs'
-PATH_PARAGRAPHS_ARTICLES = PATH_DATA + 'train.fold1.cbor.article.qrels'
-PATH_ENTITIES_ARTICLES = PATH_DATA + 'train.fold1.cbor.article.entity.qrels'
+PATH_ARTICLES = PATH_DATA + 'train.fold3.cbor'
+PATH_PARAGRAPHS = PATH_DATA + 'train.fold3.cbor.paragraphs'
+PATH_PARAGRAPHS_ARTICLES = PATH_DATA + 'train.fold3.cbor.article.qrels'
+PATH_ENTITIES_ARTICLES = PATH_DATA + 'entities.csv'
 
-# the big file
-# PATH_ENTITIES_ARTICLES = 'F:/Business Informatics/Thesis/Data/all/articles.cbor.article.entity.qrels'
+# temp
+PATH_ENTITIES_ARTICLES = PATH_DATA + 'es2.csv'
 
-# output folder path
+# output folder
 PATH_OUTPUT = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/output/'
 
-# DataObjects path
-PATH_DATAOBJECTS = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/dataObjects/'
+# KB
+PATH_KB = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/KB/'
+PATH_MENTIONS = PATH_KB + 'all/' +  'mentions.pickle'
+PATH_BEST_ENTITIES = PATH_KB + 'all/' + 'best_entities.csv'
 
-# gold standard path
-FILE_GOLD_STANDARD = 'annotations.csv'
+# gold standard
 PATH_GOLD_STANDARD = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/gold_standard/'
 
-FILE_GOLD_STANDARD_ARTICLES = 'gs_articles.pickle'
-FILE_TOKENIZER = 'gs_tokenizer.pickle'
+PATH_REDIRECTS = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/KB/all/redirects.csv'
 
 # dbpedia spotlight
 PATH_DBPEDIA_SPOTLIGHT_OUTPUT = 'F:/Business Informatics/Thesis/Python/DBpedia Spotlight/output/'
