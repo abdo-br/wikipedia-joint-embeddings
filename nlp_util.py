@@ -13,7 +13,7 @@ ENTITY_PATTERN = r'\[[^\[\]]*?\](?=\([^\[]+?\))\(.*?((?=\()\(.+?\).*?|[^\(\)]+?)
 
 def get_entity_pattern(entity):
     # [mention](entity)
-    p = re.escape(entity)
+    p = re.escape(str(entity))
     return ''.join([r'\[[^\[\]]*?\](?=\(', p, r'\))\(', p, r'\)'])
 
 
@@ -53,33 +53,25 @@ def zip_emptylines(text):
     return re.sub(r'\n+(?=\n)', '\n', text)
 
 
-def get_clean_article(article_body):
+def clean_article(article_body):
 
-    # remove sections titles and refs
+    # remove sections titles and refs and qutations
+    article_body = re.sub(r'(<ref.+?>)|([\']+[\s\.,;])|([\s][\']+)|(\")', ' ', article_body)
     article_body = re.sub(r'[=]+\s.+\s[=]+', '', article_body)
-    article_body = re.sub(r'<ref.*>', ' ', article_body)
-    # clean the bold or italic words
-    article_body = article_body.replace('\'\'', '')
-    article_body = zip_emptylines(article_body)  # zip empty lines
+
+    # separate sentences
+    article_body = re.sub(r'(?<=[0-9a-z\"])\.(?=[A-Z])|\.(?=[0-9a-z]{32})', '. ', article_body)
+
+    # zip text
     article_body = zip_whitespaces(article_body)
+    article_body = zip_emptylines(article_body)
     article_body = article_body.strip('\n')
 
     return article_body
 
 
-def trained_punkt_tokenizer(corpus):  # list
-    tokenizer = PunktSentenceTokenizer()
-    for a in iter(corpus):
-        tokenizer.train(a)
-
-    return tokenizer
-
-
-def get_sentences(text, tokenizer=None):
-    if tokenizer is None:
-        return sent_tokenize(text, language='english')
-    else:
-        return tokenizer.tokenize(text)
+def get_sentences(text):
+    return sent_tokenize(text, language='english')
 
 
 def get_paragraphs(text):
