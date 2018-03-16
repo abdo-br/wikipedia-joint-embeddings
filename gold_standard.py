@@ -21,8 +21,7 @@ class gold_standard():
     def __init__(self):
         import pandas as pd
         self.annotations = pd.read_csv(settings.PATH_GOLD_STANDARD +
-                                       settings.FILE_GOLD_STANDARD,
-                                       encoding='utf-8')
+                                       'annotations.csv', encoding='utf-8')
         self.articles = []
         for file in os.scandir(settings.PATH_GOLD_STANDARD + 'corpus/'):
             with open(file.path, 'r') as a:
@@ -31,4 +30,4 @@ class gold_standard():
 
 # test
 
-gs = gold_standard()
+#gs = gold_standard()
