@@ -16,10 +16,11 @@ PATH_DATA = 'F:/Business Informatics/Thesis/Data/train/'
 PATH_ARTICLES = PATH_DATA + 'train.fold3.cbor'
 PATH_PARAGRAPHS = PATH_DATA + 'train.fold3.cbor.paragraphs'
 PATH_PARAGRAPHS_ARTICLES = PATH_DATA + 'train.fold3.cbor.article.qrels'
-PATH_ENTITIES_ARTICLES = PATH_DATA + 'entities.csv'
+#PATH_ENTITIES_ARTICLES = PATH_DATA + 'entities.csv'
 
 # temp
-PATH_ENTITIES_ARTICLES = PATH_DATA + 'es2.csv'
+PATH_DATA2 = 'F:/Business Informatics/Thesis/Data/train/'
+PATH_ENTITIES_ARTICLES = PATH_DATA2 + 'es2.csv'
 
 # output folder
 PATH_OUTPUT = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/output/'
@@ -27,7 +28,9 @@ PATH_OUTPUT = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/output/'
 # KB
 PATH_KB = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/KB/'
 PATH_MENTIONS = PATH_KB + 'all/' +  'mentions.pickle'
-PATH_BEST_ENTITIES = PATH_KB + 'all/' + 'best_entities.csv'
+#PATH_MENTIONS = PATH_KB + 'all/' +  'all_mentions.csv'
+#PATH_BEST_ENTITIES = PATH_KB + 'all/' + 'best_entities.csv'
+PATH_BEST_ENTITIES = PATH_KB + 'all/' + 'most_freq.pickle'
 
 # gold standard
 PATH_GOLD_STANDARD = 'F:/Business Informatics/Thesis/Python/Wikipedia_EE/gold_standard/'

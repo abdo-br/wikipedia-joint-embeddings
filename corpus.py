@@ -22,13 +22,13 @@ def main():
     s = 0
     p = 0
     i = 1
-    store = 50  # 2500
-    part = 50  # 200000
+    store = 1000 #500
+    part = 50 #100000
     cores = 2
 
     # 1 - 500000 + loop
-    start = 1
-    end = 500
+    start = 100
+    end = 600 #0
 
     opts, args = getopt.getopt(sys.argv[1:], 'c:p:s:e:')
     for opt, arg in opts:
@@ -44,7 +44,7 @@ def main():
     print('workers: ' + str(cores))
     print('articles: ' + str(start)+' - '+str(end))
 
-    dictionary = pd.DataFrame(columns=['Entity', 'EntityID'], dtype='unicode', index=None)
+    dictionary = pd.DataFrame(columns=['entity', 'entity_id'], dtype='unicode', index=None)
     jobs = None
 
     if os.name == 'nt':
@@ -71,7 +71,6 @@ def main():
                 s += 1
                 p += 1
 
-                #dictionary = dictionary.append(annotations[['Entity', 'EntityID']])
                 dictionary = dictionary.append(annotations)
                 corpus += article_body
                 corpus += '\n\n'

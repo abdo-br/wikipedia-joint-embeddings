@@ -30,7 +30,7 @@ def split_dataframe(df, col='hash'):
 
 
 def sorted_dataframe(dataframe, key, ASC=True):
-    # sort dataframe
+    # sort dataframe or series
     dataframe.index = key
     # sort then reset index and drop the sort one
     dataframe = dataframe.sort_index(ascending=ASC).reset_index(drop=True)
@@ -38,7 +38,6 @@ def sorted_dataframe(dataframe, key, ASC=True):
 
 
 def get_article(title):
-
     pages = data.AnnotationsFile(settings.PATH_ARTICLES)
     page = pages.get(str.encode(title.replace(' ', '%20'), encoding='utf-8'))
     return page
@@ -81,17 +80,25 @@ def decode_percent(value):
 #    return df
 
 def get_most_freq_entities():
-    chunks = pd.read_table(settings.PATH_BEST_ENTITIES, sep=',',
-                           header=0, index_col=False, dtype='unicode',
-                           chunksize=500000, low_memory=False, engine='c')
-
-    best_entities = pd.concat([chunk for chunk in chunks], ignore_index=True)
-
-    return best_entities
+    return pickle.load(open(settings.PATH_BEST_ENTITIES, 'rb'))
+#    chunks = pd.read_table(settings.PATH_BEST_ENTITIES, sep=',',
+#                           header=0, index_col=False, dtype='unicode',
+#                           chunksize=500000, low_memory=False, engine='c')
+#
+#    best_entities = pd.concat([chunk for chunk in chunks], ignore_index=True)
+#
+#    return best_entities
 
 
 def get_mentions():
     return pickle.load(open(settings.PATH_MENTIONS, 'rb'))
+#    chunks = pd.read_table(settings.PATH_MENTIONS, sep=',',
+#                       header=0, index_col=False, dtype='unicode',
+#                       chunksize=500000, low_memory=False, engine='c')
+#
+#    mentions = pd.concat([chunk for chunk in chunks], ignore_index=True)
+#
+#    return mentions[['mention', 'entity']]
 
 
 def get_entities():  # we need to clean redirects

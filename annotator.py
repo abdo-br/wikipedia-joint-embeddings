@@ -3,6 +3,7 @@ import re
 import util
 import nlp_util as nlp
 import pandas as pd
+from functools import reduce
 
 Middle = ''
 Original = ''
@@ -20,16 +21,16 @@ def initialize_knowledgebase():
     all_mentions = util.get_mentions()
     print('Mentions Dictionary Loaded!')
     most_freq = util.get_most_freq_entities()
-    most_freq.set_index('mention', inplace=True)
-    print('Most Frequent Entities Loaded!')
+    #most_freq.set_index('mention', inplace=True)
+    print('Most Frequent Entities Dictionary Loaded!')
 
 
 # for evaluation
 def get_annotations(gold_standard):
 
-    annotations = pd.DataFrame(columns=['Article', 'Mention', 'Entity',
-                                        'EntityID', 'Offset', 'Sentence',
-                                        'The_Sentence'], dtype='unicode', index=None)
+    annotations = pd.DataFrame(columns=['article', 'mention', 'entity',
+                                        'entity_id', 'offset', 'sentence',
+                                        'the_sentence'], dtype='unicode', index=None)
 
     for article in gold_standard.articles:
 
@@ -38,14 +39,8 @@ def get_annotations(gold_standard):
 
         article_entities = entities[article.page_id]
 
-        mentions = []
-        for entity in article_entities['entity']:
-            try:
-                mentions.extend(all_mentions[entity])
-            except:
-                continue
-
-        mentions = sorted(mentions, key=len)[::-1]
+        mentions = pd.merge(article_entities.to_frame(), all_mentions, how='inner', on='entity')['mention']
+        mentions = util.sorted_dataframe(mentions, mentions.str.len(), ASC=False)
 
         for mention in mentions:
             for match in re.finditer(re.escape(mention), article.text):
@@ -58,8 +53,8 @@ def get_annotations(gold_standard):
         for sentence in nlp.get_sentences_spans(article.text, tokenized_sents):
             sentences_spans.append(sentence)
 
-        annotations = util.sorted_dataframe(annotations, annotations.Offset, True)
-        annotations[['Sentence', 'The_Sentence']] = pd.DataFrame(list(annotations['Offset'].map(lambda x: nlp.get_sentence_number(sentences_spans, x))))
+        annotations = util.sorted_dataframe(annotations, annotations.offset, True)
+        annotations[['sentence', 'the_sentence']] = pd.DataFrame(list(annotations['offset'].map(lambda x: nlp.get_sentence_number(sentences_spans, x))))
 
         return annotations
 
@@ -68,17 +63,18 @@ def disambiguate(text, mention):
     # naive approach
     # most frequent entity given mention
     try:
-        entity = most_freq.loc[(mention,)].values[0]
+        #entity = most_freq.loc[mention, 'entity']
+        entity = most_freq[mention]
         return entity
     except:
         return mention
 
 
-def search(article_name, text):  # expect clean text
+def advanced_search(article_name, text, article_entities):  # expect clean text
 
-    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention',
-                                        'Used_Entity', 'Entity', 'EntityID',
-                                        'Offset'], dtype='unicode', index=None)
+    annotations = pd.DataFrame(columns=['article', 'level', 'mention',
+                                        'used_entity', 'entity', 'entity_id',
+                                        'offset'], dtype='unicode', index=None)
 
     # clean article
     article_body = text
@@ -89,20 +85,22 @@ def search(article_name, text):  # expect clean text
     # search for mentions of the article
     # and mentions of the article entities
 
+    mentions = pd.merge(article_entities.to_frame(), all_mentions, how='inner', on='entity')['mention']
+    mentions = util.sorted_dataframe(mentions, mentions.str.len(), ASC=False)
+
+    ''' old approach
     mentions = []
-    for entity in annotations['Entity']:
+    for entity in article_entities:
         try:
             mentions.extend(all_mentions[entity])
         except:
             continue
 
-    #mentions.extend(annotations['Mention'].values)
+    #mentions.extend(annotations['mention'].values)
 
     #mentions = list(set(mentions))
     mentions = sorted(mentions, key=len)[::-1]
-
-    # TODO
-    # stem the mentions
+    '''
 
     regex_input = article_body
     for mention in mentions:
@@ -113,29 +111,59 @@ def search(article_name, text):  # expect clean text
 
     # fix other mentions offsets
     # work on copy of annotations
-    rows = annotations[['Mention', 'Offset']].copy(deep=True)
-    annotations['Ori_Offset'] = annotations['Offset']
+    rows = annotations[['mention', 'offset']].copy(deep=True)
+    annotations['ori_offset'] = annotations['offset']
 
     for index, annotation in annotations.iterrows():
         for i, row in rows.iterrows():
-            if row['Offset'] < annotation['Ori_Offset']:
-                annotations.loc[index, 'Offset'] += 32 - len(row['Mention'])
+            if row['offset'] < annotation['ori_offset']:
+                annotations.loc[index, 'offset'] += 32 - len(row['mention'])
 
     # sort by offset
-    annotations = util.sorted_dataframe(annotations, annotations['Offset'], True)
+    annotations = util.sorted_dataframe(annotations, annotations['offset'], True)
 
     # reconstruct the article
     for row in annotations.itertuples():
-        article_body = nlp.replace_part_of_text(article_body, row.EntityID, row.Offset, len(row.Mention))
+        article_body = nlp.replace_part_of_text(article_body, row.entity_id, row.offset, len(row.mention))
 
     return annotations, article_body
 
 
+def search(article_name, text, article_entities):
+
+    article_body = text
+
+    #mentions = all_mentions.loc[all_mentions.entity.isin(article_entities), 'mention']
+    #mentions = all_mentions.query('entity in @article_entities')['mention']
+
+    #mentions = pd.merge(article_entities.to_frame(), all_mentions, how='inner', on=['entity'])['mention']
+    #mentions = util.sorted_dataframe(mentions, mentions.str.len(), ASC=False)
+
+    mentions = []
+
+    try:
+        mentions.extend(map(all_mentions.get, article_entities))
+        mentions = filter(None, mentions)
+        mentions = reduce(lambda x,y: x+y, mentions)
+    except:
+        pass
+
+    #mentions = list(set(mentions))
+    mentions = sorted(mentions, key=len)[::-1]
+
+    for mention in mentions:
+        entity = disambiguate(None, mention)
+        entity_id = nlp.get_entity_id(entity)
+        article_body = re.sub(r'\b{}\b'.format(re.escape(mention)), ' '+entity_id+' ', article_body)
+
+    return article_body
+
+
 def annotate(article, and_search=True):
 
-    annotations = pd.DataFrame(columns=['Article', 'Level', 'Mention',
-                                        'Used_Entity', 'Entity', 'EntityID',
-                                        'Offset'], dtype='unicode', index=None)
+    annotations = pd.DataFrame(columns=['article', 'level', 'mention',
+                                        'used_entity', 'entity', 'entity_id',
+                                        'offset'], dtype='unicode', index=None)
 
     #global Original
     #Original = article.to_string()
@@ -153,7 +181,7 @@ def annotate(article, and_search=True):
         #error_articles.append(article)
         return None, None
 
-    # process invalid entities
+    # invalid entities
     regex_input = article_body
     for entity in article_entities.loc[article_entities.valid == 'False', 'used_entity']:
         for pair in re.finditer(nlp.get_entity_pattern(entity), regex_input):
@@ -185,13 +213,18 @@ def annotate(article, and_search=True):
 
     if and_search:
         # search for more entities
-        search_annotations, article_body = search(article.page_name, article_body)
-        annotations = annotations.append(search_annotations)
+        article_body = search(article.page_name, article_body, annotations['entity'].drop_duplicates())
+        #annotations = annotations.append(search_annotations)
 
     #global Final
     #Final = article_body
 
     article_body = nlp.clean_article(article_body)
 
+    try:
+        print(article.page_name)
+    except:
+        pass
+
     # to build the IDs dict
-    return annotations[['Entity', 'EntityID']], article_body
+    return annotations[['entity', 'entity_id']], article_body
