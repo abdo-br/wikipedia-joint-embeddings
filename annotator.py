@@ -28,24 +28,42 @@ def initialize_knowledgebase():
 # for evaluation
 def get_annotations(gold_standard):
 
+    entities = util.get_entities()
+    all_mentions = util.get_mentions()
+    global most_freq
+    most_freq = util.get_most_freq_entities()
+
     annotations = pd.DataFrame(columns=['article', 'mention', 'entity',
                                         'entity_id', 'offset', 'sentence',
                                         'the_sentence'], dtype='unicode', index=None)
 
     for article in gold_standard.articles:
 
-        # search for mentions of the article
-        # and for mentions of the article entities
+        print(article.title)
 
-        article_entities = entities[article.page_id]
+        anno = pd.DataFrame(columns=['article', 'mention', 'entity',
+                                            'entity_id', 'offset', 'sentence',
+                                            'the_sentence'], dtype='unicode', index=None)
 
-        mentions = pd.merge(article_entities.to_frame(), all_mentions, how='inner', on='entity')['mention']
-        mentions = util.sorted_dataframe(mentions, mentions.str.len(), ASC=False)
+        # search for mentions of the article entities
+
+        article_entities = entities.loc[entities.article == article.title.replace(' ', '%20'), 'entity']
+
+        mentions = []
+
+        try:
+            mentions.extend(map(all_mentions.get, article_entities))
+            mentions = filter(None, mentions)
+            mentions = reduce(lambda x,y: x+y, mentions)
+        except:
+            pass
+
+        mentions = sorted(mentions, key=len)[::-1]
 
         for mention in mentions:
-            for match in re.finditer(re.escape(mention), article.text):
+            for match in re.finditer(r'\b{}\b'.format(re.escape(mention)), article.text):
                 entity = disambiguate(None, match.group())
-                annotations.loc[len(annotations.index)] = [article.title, match.group(), entity, nlp.get_entity_id(entity), match.start(), -1, None]
+                anno.loc[len(anno.index)] = [article.title, match.group(), entity, nlp.get_entity_id(entity), match.start(), -1, None]
 
         # map offsets to sentences
         sentences_spans = []
@@ -53,10 +71,12 @@ def get_annotations(gold_standard):
         for sentence in nlp.get_sentences_spans(article.text, tokenized_sents):
             sentences_spans.append(sentence)
 
-        annotations = util.sorted_dataframe(annotations, annotations.offset, True)
-        annotations[['sentence', 'the_sentence']] = pd.DataFrame(list(annotations['offset'].map(lambda x: nlp.get_sentence_number(sentences_spans, x))))
+        anno = util.sorted_dataframe(anno, anno.offset, True)
+        anno[['sentence', 'the_sentence']] = pd.DataFrame(list(anno['offset'].map(lambda x: nlp.get_sentence_number(sentences_spans, x))))
 
-        return annotations
+        annotations = annotations.append(anno)
+
+    return annotations
 
 
 def disambiguate(text, mention):
@@ -82,8 +102,7 @@ def advanced_search(article_name, text, article_entities):  # expect clean text
     #global Middle
     #Middle = article_body
 
-    # search for mentions of the article
-    # and mentions of the article entities
+    # search for mentions of the article entities
 
     mentions = pd.merge(article_entities.to_frame(), all_mentions, how='inner', on='entity')['mention']
     mentions = util.sorted_dataframe(mentions, mentions.str.len(), ASC=False)

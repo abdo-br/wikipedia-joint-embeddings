@@ -24,10 +24,5 @@ class gold_standard():
                                        'annotations.csv', encoding='utf-8')
         self.articles = []
         for file in os.scandir(settings.PATH_GOLD_STANDARD + 'corpus/'):
-            with open(file.path, 'r') as a:
+            with open(file.path, 'r', encoding='utf-8') as a:
                 self.articles.append(self.article(file.name[:-4], a.read()))
-
-
-# test
-
-#gs = gold_standard()

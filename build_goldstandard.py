@@ -32,10 +32,18 @@ def annotate(article):
 
     article_body = article.to_string()
 
-    article_body = nlp.get_paragraphs(article_body)
-    del article_body[0]
-    article_body = '\n\n'.join([p.strip() for p in article_body])
     article_body = nlp.clean_article(article_body)
+    article_body = nlp.get_paragraphs(article_body)
+
+    # remove first paragraph
+    del article_body[0]
+
+    # trim long paragraphs
+    for i, p in enumerate(article_body):
+        if len(p) > 5000:
+            article_body[i] = article_body[i][:4999]
+
+    article_body = '\n\n'.join([p.strip() for p in article_body])
 
     regex_input = article_body
     for index, entity_row in article_entities.iterrows():

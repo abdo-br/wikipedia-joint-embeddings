@@ -17,6 +17,17 @@ def get_entity_pattern(entity):
     return ''.join([r'\[[^\[\]]*?\](?=\(', p, r'\))\(', p, r'\)'])
 
 
+def is_redirect(entity):
+
+    query = requests.get(r'https://en.wikipedia.org/w/api.php?action=query&titles={}&&redirects&format=json'.format(entity))
+    data = json.loads(query.text)
+
+    if 'redirects' in data['query']:
+        return True
+    else:
+        return False
+
+
 def resolve_redirect(entity):
 
     query = requests.get(r'https://en.wikipedia.org/w/api.php?action=query&titles={}&&redirects&format=json'.format(entity))
